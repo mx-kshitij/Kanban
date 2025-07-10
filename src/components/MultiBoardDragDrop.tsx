@@ -165,7 +165,7 @@ function DroppableColumn({ column, boardId, allowCardReordering, children, dragO
     );
 }
 
-function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeight = 300, collapsible = true }: BoardContainerProps): ReactElement {
+function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeight, collapsible = true }: BoardContainerProps): ReactElement {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const toggleCollapse = () => {
@@ -203,7 +203,7 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
                 <div 
                     className="kanban-board"
                     style={{ 
-                        height: `${defaultHeight}px`,
+                        height: `${defaultHeight || 300}px`,
                         minHeight: '150px',
                         maxHeight: '800px'
                     }}
