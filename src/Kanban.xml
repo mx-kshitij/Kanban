@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="mendix.kanban.Kanban" pluginWidget="true" needsEntityContext="true" offlineCapable="true" supportedPlatform="Web"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>Kanban</name>
+    <description>My widget description</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="General">
+            <property key="typeOfBoard" type="enumeration" defaultValue="single">
+                <caption>Type of board</caption>
+                <description></description>
+                <enumerationValues>
+                    <enumerationValue key="single">Single</enumerationValue>
+                    <enumerationValue key="multi">Multi</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="changeJSON" type="attribute" required="true">
+                <caption>Change</caption>
+                <description></description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="sortOrderJSON" type="attribute" required="true">
+                <caption>New column order</caption>
+                <description></description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="boardHeight" type="attribute" required="false">
+                <caption>Board height</caption>
+                <description></description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="Single">
+            <propertyGroup caption="Columns">
+                <property key="s_data_columns" type="datasource" isList="true" required="false">
+                    <caption>Columns</caption>
+                    <description />
+                </property>
+                <property key="s_column_id" type="attribute" required="false" dataSource="s_data_columns">
+                    <caption>Column id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="s_column_sort" type="attribute" required="false" dataSource="s_data_columns">
+                    <caption>Sort by</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="Integer"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Cards">
+                <property key="s_data_cards" type="datasource" isList="true" required="false">
+                    <caption>Cards</caption>
+                    <description />
+                </property>
+                <property key="s_card_id" type="attribute" required="false" dataSource="s_data_cards">
+                    <caption>Card id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="s_card_parent" type="attribute" required="false" dataSource="s_data_cards">
+                    <caption>Parent column id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="s_card_sort" type="attribute" required="false" dataSource="s_data_cards">
+                    <caption>Sort by</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="Integer"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Content">
+                <property key="s_column_content" type="widgets" required="false" dataSource="s_data_columns">
+                    <caption>Single board content for column header</caption>
+                    <description>Content of a column header</description>
+                </property>
+                <property key="s_content" type="widgets" required="false" dataSource="s_data_cards">
+                    <caption>Single board content for card</caption>
+                    <description>Content of a card</description>
+                </property>
+            </propertyGroup>
+        </propertyGroup>
+
+        <propertyGroup caption="Multi">
+            <propertyGroup caption="Board">
+                <property key="m_data_boards" type="datasource" isList="true" required="false">
+                    <caption>Boards</caption>
+                    <description />
+                </property>
+                <property key="m_board_id" type="attribute" required="false" dataSource="m_data_boards">
+                    <caption>Board id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="m_board_sort" type="attribute" required="false" dataSource="m_data_boards">
+                    <caption>Sort by</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="Integer"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Columns">
+                <property key="m_data_columns" type="datasource" isList="true" required="false">
+                    <caption>Columns</caption>
+                    <description />
+                </property>
+                <property key="m_column_id" type="attribute" required="false" dataSource="m_data_columns">
+                    <caption>Board id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="m_column_parent" type="attribute" required="false" dataSource="m_data_columns">
+                    <caption>Parent board id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="m_column_sort" type="attribute" required="false" dataSource="m_data_columns">
+                    <caption>Sort by</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="Integer"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Cards">
+                <property key="m_data_cards" type="datasource" isList="true" required="false">
+                    <caption>Cards</caption>
+                    <description />
+                </property>
+                <property key="m_card_id" type="attribute" required="false" dataSource="m_data_cards">
+                    <caption>Card id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="m_card_parent" type="attribute" required="false" dataSource="m_data_cards">
+                    <caption>Parent column id</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="m_card_sort" type="attribute" required="false" dataSource="m_data_cards">
+                    <caption>Sort by</caption>
+                    <description></description>
+                    <attributeTypes>
+                        <attributeType name="Integer"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Content">
+                <property key="m_board_content" type="widgets" required="false" dataSource="m_data_boards">
+                    <caption>Multi board content for board header</caption>
+                    <description>Content of a board header</description>
+                </property>
+                <property key="m_column_content" type="widgets" required="false" dataSource="m_data_columns">
+                    <caption>Multi board content for column header</caption>
+                    <description>Content of a column header</description>
+                </property>
+                <property key="m_content" type="widgets" required="false" dataSource="m_data_cards">
+                    <caption>Multi board content for card</caption>
+                    <description>Content of a card</description>
+                </property>
+            </propertyGroup>
+        </propertyGroup>
+
+        <propertyGroup caption="Events">
+            <property key="onCardDrop" type="action" required="false">
+                <caption>On card drop</caption>
+                <description>Event triggered when a card is dropped</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

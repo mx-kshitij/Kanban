@@ -1,0 +1,224 @@
+import { ReactElement, createElement, useState } from "react";
+import { ReactNode } from "react";
+import {
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    closestCenter,
+    DragOverEvent
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+export interface KanbanCard {
+    id: string;
+    content?: ReactNode;
+    item: any;
+}
+
+export interface KanbanColumn {
+    id: string;
+    title: string;
+    cards: KanbanCard[];
+}
+
+export interface KanbanBoardProps {
+    columns: KanbanColumn[];
+    onCardDrop: (cardId: string, sourceColumnId: string, targetColumnId: string) => void;
+}
+
+interface DroppableColumnProps {
+    column: KanbanColumn;
+    children: ReactNode;
+}
+
+interface DraggableCardProps {
+    card: KanbanCard;
+    isDragging?: boolean;
+}
+
+function DroppableColumn({ column, children }: DroppableColumnProps) {
+    return (
+        <div className="kanban-column" data-column-id={column.id}>
+            <div className="kanban-column-header">
+                <h4 className="kanban-column-title">{column.title}</h4>
+                <span className="kanban-card-count">{column.cards.length}</span>
+            </div>
+            <div className="kanban-column-content">
+                <SortableContext items={column.cards.map(card => card.id)} strategy={verticalListSortingStrategy}>
+                    {children}
+                </SortableContext>
+                {column.cards.length === 0 && (
+                    <div className="kanban-column-empty">
+                        Drop cards here
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function DraggableCard({ card, isDragging = false }: DraggableCardProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging: sortableIsDragging
+    } = useSortable({ id: card.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: sortableIsDragging ? 0.5 : 1
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`kanban-card ${isDragging || sortableIsDragging ? 'dragging' : ''}`}
+            {...attributes}
+            {...listeners}
+        >
+            {card.content ? (
+                <div className="kanban-card-content">
+                    {card.content}
+                </div>
+            ) : (
+                <div className="kanban-card-fallback">
+                    Card {card.id}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function KanbanBoard({ columns, onCardDrop }: KanbanBoardProps): ReactElement {
+    const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
+    const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px movement required to start drag
+            },
+        })
+    );
+
+    // Find card and its column
+    const findCardAndColumn = (cardId: string) => {
+        for (const column of columns) {
+            const card = column.cards.find(c => c.id === cardId);
+            if (card) {
+                return { card, columnId: column.id };
+            }
+        }
+        return null;
+    };
+
+    // Find column that contains a point
+    const findColumnByPosition = (x: number, y: number) => {
+        const element = document.elementFromPoint(x, y);
+        const columnElement = element?.closest('[data-column-id]');
+        return columnElement?.getAttribute('data-column-id') || null;
+    };
+
+    const handleDragStart = (event: DragStartEvent) => {
+        const { active } = event;
+        const result = findCardAndColumn(active.id as string);
+        
+        if (result) {
+            setActiveCard(result.card);
+            setActiveColumnId(result.columnId);
+        }
+    };
+
+    const handleDragOver = (_event: DragOverEvent) => {
+        // You can add visual feedback here if needed
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        
+        if (!over || !activeCard || !activeColumnId) {
+            setActiveCard(null);
+            setActiveColumnId(null);
+            return;
+        }
+
+        // Check if dropped over a different card (reordering within column)
+        const overResult = findCardAndColumn(over.id as string);
+        let targetColumnId: string;
+
+        if (overResult) {
+            // Dropped over another card
+            targetColumnId = overResult.columnId;
+        } else {
+            // Dropped over column area - use pointer position to determine column
+            const rect = event.over?.rect;
+            if (rect) {
+                const detectedColumnId = findColumnByPosition(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                targetColumnId = detectedColumnId || activeColumnId;
+            } else {
+                targetColumnId = activeColumnId;
+            }
+        }
+
+        // Only call onCardDrop if the card moved to a different column
+        if (targetColumnId !== activeColumnId) {
+            onCardDrop(active.id as string, activeColumnId, targetColumnId);
+        }
+
+        setActiveCard(null);
+        setActiveColumnId(null);
+    };
+
+    return (
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+        >
+            <div className="kanban-board">
+                {columns.map((column) => (
+                    <DroppableColumn key={column.id} column={column}>
+                        {column.cards.map((card) => (
+                            <DraggableCard
+                                key={card.id}
+                                card={card}
+                                isDragging={activeCard?.id === card.id}
+                            />
+                        ))}
+                    </DroppableColumn>
+                ))}
+            </div>
+            <DragOverlay>
+                {activeCard ? (
+                    <div className="kanban-card kanban-card-overlay">
+                        {activeCard.content ? (
+                            <div className="kanban-card-content">
+                                {activeCard.content}
+                            </div>
+                        ) : (
+                            <div className="kanban-card-fallback">
+                                Card {activeCard.id}
+                            </div>
+                        )}
+                    </div>
+                ) : null}
+            </DragOverlay>
+        </DndContext>
+    );
+}
