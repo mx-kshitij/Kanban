@@ -239,7 +239,7 @@ export function SingleBoard(props: SingleBoardProps): ReactElement {
     }, []);
 
     // Get the board height from prop or use default
-    const defaultBoardHeight = boardHeight?.value?.toNumber() || 400;
+    const defaultBoardHeight = boardHeight || 400;
 
     return (
         <div className="kanban-single-board">

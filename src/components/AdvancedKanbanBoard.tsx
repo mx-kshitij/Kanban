@@ -1,4 +1,4 @@
-import { ReactElement, createElement, useState } from "react";
+import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
     DndContext,
@@ -174,6 +174,26 @@ export function AdvancedKanbanBoard({
         position?: 'before' | 'after';
     } | null>(null);
 
+    // Enhanced error suppression for single board drag operations
+    useEffect(() => {
+        const originalError = console.error;
+        
+        const suppressError = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver loop completed with undelivered notifications') ||
+                message.includes('ResizeObserver loop limit exceeded')) {
+                return;
+            }
+            originalError.apply(console, args);
+        };
+
+        console.error = suppressError;
+
+        return () => {
+            console.error = originalError;
+        };
+    }, []);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -196,14 +216,30 @@ export function AdvancedKanbanBoard({
         const { active } = event;
         const data = active.data.current;
 
+        // Suppress ResizeObserver errors during drag start
+        const originalError = console.error;
+        console.error = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver')) return;
+            originalError.apply(console, args);
+        };
+
         if (data?.type === 'card') {
             const result = findCardAndColumn(active.id as string);
             if (result) {
-                setActiveItem({ type: 'card', item: result.card });
-                setActiveColumnId(result.columnId);
+                // Defer state updates to prevent ResizeObserver loops
+                requestAnimationFrame(() => {
+                    setActiveItem({ type: 'card', item: result.card });
+                    setActiveColumnId(result.columnId);
+                });
             }
         }
         setDragOverInfo(null);
+        
+        // Restore error handling after brief delay
+        setTimeout(() => {
+            console.error = originalError;
+        }, 100);
     };
 
     const handleDragOver = (event: DragOverEvent) => {
@@ -246,9 +282,22 @@ export function AdvancedKanbanBoard({
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         
+        // Suppress ResizeObserver errors during drop operations
+        const originalError = console.error;
+        console.error = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver')) return;
+            originalError.apply(console, args);
+        };
+        
         if (!over || !activeItem || !activeColumnId) {
             setActiveItem(null);
             setActiveColumnId(null);
+            setDragOverInfo(null);
+            // Restore error handling
+            setTimeout(() => {
+                console.error = originalError;
+            }, 200);
             return;
         }
 
@@ -297,9 +346,17 @@ export function AdvancedKanbanBoard({
             }
         }
 
-        setActiveItem(null);
-        setActiveColumnId(null);
-        setDragOverInfo(null);
+        // Defer state updates to prevent ResizeObserver loops
+        requestAnimationFrame(() => {
+            setActiveItem(null);
+            setActiveColumnId(null);
+            setDragOverInfo(null);
+        });
+        
+        // Restore error handling after drop operation
+        setTimeout(() => {
+            console.error = originalError;
+        }, 200);
     };
 
     return (
@@ -315,7 +372,7 @@ export function AdvancedKanbanBoard({
                 style={{ 
                     height: `${boardHeight}px`,
                     minHeight: '150px',
-                    maxHeight: '800px'
+                    maxHeight: `${boardHeight}px`
                 }}
             >
                 {columns.map((column) => (

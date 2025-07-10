@@ -29,13 +29,11 @@
                     <attributeType name="String"/>
                 </attributeTypes>
             </property>
-            <property key="boardHeight" type="attribute" required="false">
+            <property key="boardHeight" type="integer" defaultValue="350">
                 <caption>Board height</caption>
                 <description></description>
-                <attributeTypes>
-                    <attributeType name="Integer"/>
-                </attributeTypes>
             </property>
+
         </propertyGroup>
 
         <propertyGroup caption="Single">

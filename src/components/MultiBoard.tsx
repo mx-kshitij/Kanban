@@ -304,7 +304,7 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
     }, []);
 
     // Get the board height from prop or use default
-    const defaultBoardHeight = boardHeight?.value?.toNumber() || 400;
+    const defaultBoardHeight = boardHeight || 400;
 
     return (
         <MultiBoardDragDrop

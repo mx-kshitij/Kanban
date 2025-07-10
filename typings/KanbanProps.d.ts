@@ -17,7 +17,7 @@ export interface KanbanContainerProps {
     typeOfBoard: TypeOfBoardEnum;
     changeJSON: EditableValue<string>;
     sortOrderJSON: EditableValue<string>;
-    boardHeight?: EditableValue<Big>;
+    boardHeight: number;
     s_data_columns?: ListValue;
     s_column_id?: ListAttributeValue<string>;
     s_column_sort?: ListAttributeValue<Big>;
@@ -57,7 +57,7 @@ export interface KanbanPreviewProps {
     typeOfBoard: TypeOfBoardEnum;
     changeJSON: string;
     sortOrderJSON: string;
-    boardHeight: string;
+    boardHeight: number | null;
     s_data_columns: {} | { caption: string } | { type: string } | null;
     s_column_id: string;
     s_column_sort: string;

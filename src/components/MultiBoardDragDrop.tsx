@@ -1,4 +1,4 @@
-import { ReactElement, createElement, useState } from "react";
+import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
     DndContext,
@@ -178,24 +178,24 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
         <div className={`kanban-board-container ${isCollapsed ? 'collapsed' : ''}`}>
             <div className="kanban-board-header">
                 <div className="kanban-board-title-wrapper">
-                    <div className="kanban-board-title">{board.title}</div>
+                    <div className="kanban-board-title-row">
+                        {collapsible && (
+                            <button 
+                                className={`kanban-board-collapse-btn ${isCollapsed ? 'collapsed' : ''}`}
+                                onClick={toggleCollapse}
+                                title={isCollapsed ? 'Expand board' : 'Collapse board'}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 4l4 4H4l4-4z"/>
+                                </svg>
+                            </button>
+                        )}
+                        <div className="kanban-board-title">{board.title}</div>
+                    </div>
                     <div className="kanban-board-stats">
                         <span className="kanban-board-column-count">{board.columns.length} columns</span>
                         <span className="kanban-board-card-count">{cardCount} cards</span>
                     </div>
-                </div>
-                <div className="kanban-board-controls">
-                    {collapsible && (
-                        <button 
-                            className={`kanban-board-collapse-btn ${isCollapsed ? 'collapsed' : ''}`}
-                            onClick={toggleCollapse}
-                            title={isCollapsed ? 'Expand board' : 'Collapse board'}
-                        >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 4l4 4H4l4-4z"/>
-                            </svg>
-                        </button>
-                    )}
                 </div>
             </div>
             
@@ -203,9 +203,9 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
                 <div 
                     className="kanban-board"
                     style={{ 
-                        height: `${defaultHeight || 300}px`,
+                        height: `${defaultHeight || 400}px`,
                         minHeight: '150px',
-                        maxHeight: '800px'
+                        maxHeight: `${defaultHeight || 400}px`
                     }}
                 >
                     {board.columns.map((column) => (
@@ -233,9 +233,9 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
 export function MultiBoardDragDrop({ 
     boards, 
     onCardDrop, 
-    allowCardReordering = true,
-    defaultBoardHeight = 300,
-    collapsible = true
+    allowCardReordering = true, 
+    defaultBoardHeight = 400,
+    collapsible = true 
 }: MultiBoardDragDropProps): ReactElement {
     const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
     const [dragOverInfo, setDragOverInfo] = useState<{
@@ -243,7 +243,33 @@ export function MultiBoardDragDrop({
         cardId?: string;
         position?: 'before' | 'after';
     } | null>(null);
-    
+
+    // Enhanced error suppression specifically for drag operations
+    useEffect(() => {
+        const originalError = console.error;
+        let errorSuppressionTimeout: NodeJS.Timeout | null = null;
+
+        const suppressError = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver loop completed with undelivered notifications') ||
+                message.includes('ResizeObserver loop limit exceeded')) {
+                // Suppress ResizeObserver errors completely during drag operations
+                return;
+            }
+            originalError.apply(console, args);
+        };
+
+        // Override console.error during component lifecycle
+        console.error = suppressError;
+
+        return () => {
+            console.error = originalError;
+            if (errorSuppressionTimeout) {
+                clearTimeout(errorSuppressionTimeout);
+            }
+        };
+    }, []);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -262,19 +288,52 @@ export function MultiBoardDragDrop({
     function handleDragStart(event: DragStartEvent) {
         const { active } = event;
         
+        // Suppress ResizeObserver errors during drag operations
+        const originalError = console.error;
+        console.error = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver')) return;
+            originalError.apply(console, args);
+        };
+        
         if (active.data.current?.type === "card") {
-            setActiveCard(active.data.current.card);
+            // Defer state update to prevent ResizeObserver loops
+            requestAnimationFrame(() => {
+                setActiveCard(active.data.current?.card || null);
+            });
         }
         setDragOverInfo(null);
+        
+        // Restore error handling after a brief delay
+        setTimeout(() => {
+            console.error = originalError;
+        }, 100);
     }
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         
-        setActiveCard(null);
-        setDragOverInfo(null);
+        // Suppress ResizeObserver errors during drop operations
+        const originalError = console.error;
+        console.error = (...args: any[]) => {
+            const message = args[0]?.toString?.() || '';
+            if (message.includes('ResizeObserver')) return;
+            originalError.apply(console, args);
+        };
         
-        if (!over || !active.data.current?.card) return;
+        // Defer state updates to prevent ResizeObserver loops
+        requestAnimationFrame(() => {
+            setActiveCard(null);
+            setDragOverInfo(null);
+        });
+        
+        if (!over || !active.data.current?.card) {
+            // Restore error handling
+            setTimeout(() => {
+                console.error = originalError;
+            }, 200);
+            return;
+        }
         
         const draggedCard = active.data.current.card;
         const draggedCardId = draggedCard.id;
@@ -341,6 +400,11 @@ export function MultiBoardDragDrop({
                 }
             }
         }
+        
+        // Restore error handling after drop operation
+        setTimeout(() => {
+            console.error = originalError;
+        }, 200);
     }
 
     function handleDragOver(event: DragOverEvent) {
@@ -401,13 +465,14 @@ export function MultiBoardDragDrop({
     }
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-        >
+        <div className="kanban-error-boundary">
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+            >
             <SortableContext items={allCardIds} strategy={verticalListSortingStrategy}>
                 <div className="kanban-multi-board">
                     {boards.map((board) => (
@@ -437,5 +502,6 @@ export function MultiBoardDragDrop({
                 ) : null}
             </DragOverlay>
         </DndContext>
+        </div>
     );
 }
