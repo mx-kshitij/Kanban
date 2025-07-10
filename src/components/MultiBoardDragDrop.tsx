@@ -1,3 +1,11 @@
+/**
+ * Multi Board Drag & Drop Component
+ * 
+ * Advanced drag & drop implementation for multiple Kanban boards using @dnd-kit.
+ * Supports cross-board card movement, collapsible boards, and optimistic UI updates.
+ * Includes comprehensive ResizeObserver error suppression for smooth drag operations.
+ */
+
 import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {

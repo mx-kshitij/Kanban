@@ -1,3 +1,11 @@
+/**
+ * Advanced Kanban Board Component
+ * 
+ * Core single-board implementation using @dnd-kit for drag & drop functionality.
+ * Handles column-based card organization with reordering support and visual feedback.
+ * Includes ResizeObserver error suppression for smooth drag operations.
+ */
+
 import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
@@ -19,6 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 
+// Type definitions for Kanban data structures
 export interface KanbanCard {
     id: string;
     content?: ReactNode;

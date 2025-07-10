@@ -1,3 +1,10 @@
+/**
+ * Single Board Component
+ * 
+ * Handles the single board mode of the Kanban widget where all columns
+ * are displayed on a single board with drag & drop functionality.
+ */
+
 import { ReactElement, createElement, useCallback, useState, useEffect } from "react";
 import { KanbanContainerProps } from "../../typings/KanbanProps";
 import { ObjectItem, ValueStatus } from "mendix";
@@ -7,27 +14,36 @@ import { createCard } from "./shared/cardUtils";
 
 export interface SingleBoardProps extends KanbanContainerProps {}
 
+/**
+ * SingleBoard component that renders a single Kanban board with columns and cards
+ * Uses the AdvancedKanbanBoard for drag & drop functionality
+ */
 export function SingleBoard(props: SingleBoardProps): ReactElement {
     const {
+        // Column data source and attributes
         s_data_columns,
         s_column_id,
         s_column_sort,
         s_column_content,
+        
+        // Card data source and attributes
         s_data_cards,
         s_card_id,
         s_card_parent,
         s_card_sort,
         s_content,
+        
+        // Event handlers and configuration
         onCardDrop,
         changeJSON,
         sortOrderJSON,
         boardHeight
     } = props;
 
-    // State for optimistic updates
+    // State for optimistic updates during drag operations
     const [optimisticColumns, setOptimisticColumns] = useState<KanbanColumn[] | null>(null);
     
-    // Use shared cache management
+    // Use shared cache management for performance optimization
     const {
         cachedCardContent,
         cardsUsingCache,
@@ -36,21 +52,27 @@ export function SingleBoard(props: SingleBoardProps): ReactElement {
         setCardsUsingCache
     } = useCardCache();
 
+    /**
+     * Builds columns array from Mendix data sources
+     * Processes column data and associated cards with sorting
+     */
     const getColumns = useCallback(() => {
         if (!s_data_columns || s_data_columns.status !== ValueStatus.Available) {
             return [];
         }
 
         return s_data_columns.items?.map((columnItem: ObjectItem) => {
+            // Extract column attributes from Mendix data
             const columnId = s_column_id?.get(columnItem)?.value || "";
             const columnContent = s_column_content?.get(columnItem);
             const columnSortValue = s_column_sort?.get(columnItem)?.value?.toNumber() || 0;
             
-            // Get cards for this column
+            // Get cards for this column and filter by parent relationship
             const cards = s_data_cards?.items?.filter((cardItem: ObjectItem) => {
                 const cardParent = s_card_parent?.get(cardItem)?.value || "";
                 return cardParent === columnId;
             })
+            // Sort cards by sort attribute
             .sort((a, b) => {
                 // Sort cards by sort attribute if available
                 const sortA = s_card_sort?.get(a)?.value?.toNumber() || 0;

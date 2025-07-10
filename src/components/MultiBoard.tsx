@@ -1,3 +1,11 @@
+/**
+ * Multi Board Component
+ * 
+ * Handles the multi-board mode of the Kanban widget where multiple boards
+ * are displayed, each containing their own columns and cards. Supports
+ * collapsible boards and cross-board card movement.
+ */
+
 import { ReactElement, createElement, useCallback, useEffect, useState } from "react";
 import { KanbanContainerProps } from "../../typings/KanbanProps";
 import { ObjectItem, ValueStatus } from "mendix";
@@ -7,12 +15,19 @@ import { MultiBoardDragDrop } from "./MultiBoardDragDrop";
 
 export interface MultiBoardProps extends KanbanContainerProps {}
 
+/**
+ * MultiBoard component that renders multiple Kanban boards with collapsible functionality
+ * Uses MultiBoardDragDrop for advanced drag & drop across boards
+ */
 export function MultiBoard(props: MultiBoardProps): ReactElement {
     const {
+        // Board data source and attributes
         m_data_boards,
         m_board_id,
         m_board_sort,
         m_board_content,
+        
+        // Column data source and attributes
         m_data_columns,
         m_column_id,
         m_column_parent,

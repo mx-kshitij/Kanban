@@ -1,26 +1,36 @@
-/* Kanban Widget Styles */
+/**
+ * Kanban Widget Styles
+ * 
+ * Comprehensive styling for the Kanban widget supporting both single and multi-board modes.
+ * Includes responsive design, accessibility features, and smooth animations.
+ * Optimized for performance with specific transitions to prevent ResizeObserver loops.
+ */
+
+/* Root widget container */
 .kanban-widget {
     width: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Board Layouts */
+/* Board layout containers */
 .kanban-single-board,
 .kanban-multi-board {
     width: 100%;
 }
 
+/* Single board layout - full height flexibility */
 .kanban-single-board {
-    /* Single board keeps full height flexibility */
     min-height: 400px;
 }
 
+/* Multi-board layout - vertical stacking with spacing */
 .kanban-multi-board {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
+/* Individual board container with visual hierarchy */
 .kanban-board-container {
     border: 1px solid #e1e5e9;
     border-radius: 8px;

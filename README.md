@@ -1,53 +1,93 @@
 # Kanban Board Widget
 
-A flexible and feature-rich Kanban board widget for Mendix applications that supports both single and multiple boards on the same page.
+A modern, feature-rich Kanban board widget for Mendix applications supporting both single and multiple boards with advanced drag & drop functionality.
 
-## Features
+## ✨ Features
 
-- **Single Board Mode**: Display a single Kanban board with multiple columns
-- **Multiple Board Mode**: Display multiple Kanban boards, each with their own columns
-- **Advanced Drag & Drop**: Powered by @dnd-kit for smooth, accessible drag and drop functionality
-- **Card Reordering**: Reorder cards within columns and move them between columns
-- **Customizable Content**: Use Mendix widgets within cards for rich content display
-- **Responsive Design**: Works on desktop and mobile devices with touch support
-- **Accessibility**: Full keyboard navigation and screen reader support via @dnd-kit
-- **Event Handling**: Execute actions when cards are moved or clicked
-- **Modern UI**: Clean, professional styling with smooth animations and transitions
+- **🎯 Dual Mode Support**: Single board or multiple boards on the same page
+- **🖱️ Advanced Drag & Drop**: Powered by @dnd-kit for smooth, accessible interactions
+- **📱 Responsive Design**: Works seamlessly on desktop and mobile with touch support
+- **♿ Accessibility**: Full keyboard navigation and screen reader support
+- **🔧 Configurable Board Height**: Customizable via Mendix property with overflow handling
+- **🎨 Modern UI**: Clean design with smooth animations and visual feedback
+- **⚡ Performance Optimized**: Includes caching and error suppression for smooth operation
+- **📋 Collapsible Boards**: Multi-board mode supports collapsible board headers
+- **🔄 Optimistic Updates**: Instant UI feedback with proper error handling
+- **🎪 Rich Content**: Use any Mendix widgets within cards for complex displays
 
-## Configuration
+## 🚀 Recent Enhancements
+
+### ResizeObserver Error Suppression
+- **Comprehensive Error Handling**: Multi-layered suppression of ResizeObserver loop errors
+- **Global Error Management**: Window-level error handling for drag operations
+- **Deferred Callbacks**: Custom ResizeObserver wrapper to prevent measurement loops
+- **Performance Optimized**: RequestAnimationFrame for smooth state updates
+
+### Improved Board Headers
+- **Intuitive Layout**: Collapse toggle positioned inline with board titles
+- **Enhanced UX**: Better visual hierarchy and responsive controls
+- **Consistent Styling**: Optimized CSS for cross-browser compatibility
+
+### Height Management
+- **Configurable Heights**: Board height property with consistent min/max values
+- **Overflow Handling**: Proper scrolling and content management
+- **Responsive Sizing**: Adapts to different screen sizes and content
+
+## ⚙️ Configuration
 
 ### General Settings
 
-- **Type of Board**: Choose between "Single" or "Multi" board layout
-- **Events**: Configure actions for card drop events
+| Property | Type | Description |
+|----------|------|-------------|
+| **Type of Board** | Enumeration | Single or Multi board layout |
+| **Board Height** | Integer | Height of boards in pixels (default: 350px) |
+| **Change JSON** | String Attribute | Stores drag & drop change information |
+| **Sort Order JSON** | String Attribute | Stores column reordering information |
 
 ### Single Board Configuration
 
-When using single board mode, configure:
+Perfect for focused workflows with all columns visible:
 
-#### Columns
+#### 📊 Columns
 - **Columns Data Source**: List of column entities
-- **Column ID**: Unique identifier for each column
+- **Column ID**: Unique identifier for each column  
+- **Sort By**: Integer for column ordering
 
-#### Cards
+#### 🃏 Cards
 - **Cards Data Source**: List of card entities
 - **Card ID**: Unique identifier for each card
-- **Parent Column ID**: Reference to the column this card belongs to
+- **Parent Column ID**: Reference to containing column
+- **Sort By**: Integer for card ordering within columns
 
-#### Content
-- **Single Board Content**: Mendix widgets to display within each card
+#### 🎨 Content
+- **Column Content**: Mendix widgets for column headers
+- **Card Content**: Mendix widgets for card display
 
 ### Multiple Board Configuration
 
-When using multiple board mode, configure:
+Ideal for complex projects with multiple workstreams:
 
-#### Boards
+#### 📋 Boards
 - **Boards Data Source**: List of board entities
 - **Board ID**: Unique identifier for each board
+- **Sort By**: Integer for board ordering
 
-#### Columns
+#### 📊 Columns  
 - **Columns Data Source**: List of column entities
 - **Column ID**: Unique identifier for each column
+- **Parent Board ID**: Reference to containing board
+- **Sort By**: Integer for column ordering
+
+#### 🃏 Cards
+- **Cards Data Source**: List of card entities  
+- **Card ID**: Unique identifier for each card
+- **Parent Column ID**: Reference to containing column
+- **Sort By**: Integer for card ordering
+
+#### 🎨 Content
+- **Board Content**: Mendix widgets for board headers
+- **Column Content**: Mendix widgets for column headers  
+- **Card Content**: Mendix widgets for card display
 - **Parent Board ID**: Reference to the board this column belongs to
 
 #### Cards
@@ -58,65 +98,283 @@ When using multiple board mode, configure:
 #### Content
 - **Multi Board Content**: Mendix widgets to display within each card
 
-## Data Model Requirements
+## 🗃️ Data Model Requirements
 
-### For Single Board
+### Single Board Mode
 
 #### Column Entity
-- `ColumnID` (String): Unique identifier
-- `Title` (String): Display name for the column
-- `Order` (Integer, optional): Sort order
+```
+ColumnID (String): Unique identifier
+Title (String): Display name for the column  
+Order (Integer): Sort order for column positioning
+Status (String, optional): Column status/color
+```
 
-#### Card Entity
-- `CardID` (String): Unique identifier
-- `ParentColumnID` (String): Reference to column
-- `Title` (String): Card title
-- `Description` (String, optional): Card description
-- `Order` (Integer, optional): Sort order within column
+#### Card Entity  
+```
+CardID (String): Unique identifier
+ParentColumnID (String): Foreign key to column
+Title (String): Card title/summary
+Description (String, optional): Detailed description
+Order (Integer): Sort order within column
+Priority (String, optional): Card priority level
+Assignee (String, optional): Assigned user
+DueDate (DateTime, optional): Due date for task
+```
 
-### For Multiple Boards
+### Multiple Board Mode
 
 #### Board Entity
-- `BoardID` (String): Unique identifier
-- `Title` (String): Display name for the board
-- `Order` (Integer, optional): Sort order
+```
+BoardID (String): Unique identifier
+Title (String): Board name/title
+Description (String, optional): Board description  
+Order (Integer): Sort order for board positioning
+Status (String, optional): Board status (active/archived)
+Owner (String, optional): Board owner/manager
+```
 
 #### Column Entity
-- `ColumnID` (String): Unique identifier
-- `ParentBoardID` (String): Reference to board
-- `Title` (String): Display name for the column
-- `Order` (Integer, optional): Sort order
+```
+ColumnID (String): Unique identifier
+ParentBoardID (String): Foreign key to board
+Title (String): Column display name
+Order (Integer): Sort order within board
+WIPLimit (Integer, optional): Work-in-progress limit
+```
 
 #### Card Entity
-- `CardID` (String): Unique identifier
-- `ParentColumnID` (String): Reference to column
-- `Title` (String): Card title
-- `Description` (String, optional): Card description
-- `Order` (Integer, optional): Sort order within column
+```
+CardID (String): Unique identifier  
+ParentColumnID (String): Foreign key to column
+Title (String): Card title/summary
+Description (String, optional): Detailed description
+Order (Integer): Sort order within column
+Priority (String, optional): Card priority level
+Assignee (String, optional): Assigned user
+DueDate (DateTime, optional): Due date for task
+Tags (String, optional): Comma-separated tags
+```
 
-## Usage Examples
+## 🛠️ Implementation Guide
 
-### Basic Single Board
-1. Create Column and Card entities in your domain model
-2. Set up data sources to retrieve columns and cards
-3. Configure the widget to use single board mode
-4. Map the column and card ID attributes
-5. Design your card content using Mendix widgets
+### Quick Start
 
-### Multiple Project Boards
-1. Create Board, Column, and Card entities
-2. Set up associations: Board -> Columns, Column -> Cards
-3. Configure the widget to use multi board mode
-4. Map all ID and parent ID attributes
-5. Design your card content for project tasks
+1. **Create Domain Model**
+   - Define your Column and Card entities with required attributes
+   - Establish proper associations (Card → Column, Column → Board if multi-board)
 
-### Team Workflow Boards
-1. Use enum for card status (To Do, In Progress, Done, etc.)
-2. Set up columns for each status
-3. Use microflows to update card status on drop events
-4. Add user assignments and due dates to card content
+2. **Configure Data Sources**
+   - Create microflows to retrieve columns and cards
+   - Ensure proper sorting by Order attributes
 
-## Events
+3. **Widget Configuration**  
+   - Add Kanban widget to your page
+   - Select Single or Multi board mode
+   - Map data sources and attributes
+   - Configure content widgets for display
+
+4. **Event Handling**
+   - Create on-drop action microflow
+   - Parse changeJSON for card movement data
+   - Update your domain model accordingly
+
+### Advanced Features
+
+#### 🔧 Custom Styling
+```css
+/* Override default styles */
+.kanban-widget {
+    --kanban-primary-color: #your-color;
+    --kanban-background: #your-background;
+}
+
+.kanban-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+```
+
+#### ⚡ Performance Tips
+- Use entity access for security without performance impact  
+- Implement proper indexing on ID and Order attributes
+- Consider pagination for large card sets
+- Use caching where appropriate
+
+#### 🔒 Security Considerations
+- Configure entity access rules properly
+- Validate user permissions in drop event handlers
+- Sanitize user input in card content
+
+## 📱 Responsive Behavior
+
+The widget automatically adapts to different screen sizes:
+
+- **Desktop (>1024px)**: Full board layout with all features
+- **Tablet (768-1024px)**: Optimized spacing and touch targets  
+- **Mobile (<768px)**: Stacked layout with horizontal scrolling
+
+## 🎨 Customization
+
+### Board Height
+- Configurable via `boardHeight` property (default: 350px)
+- Supports responsive scaling
+- Automatic overflow handling with scrollbars
+
+### Visual Themes  
+- CSS custom properties for easy theming
+- Support for light/dark modes
+- Accessibility-compliant color contrasts
+
+### Content Widgets
+- Rich text editors
+- Image displays  
+- Progress bars
+- Action buttons
+- Custom icons and badges
+
+## 🎯 Use Cases & Examples
+
+### 📋 Project Management
+```
+Boards: Projects
+Columns: Backlog → In Progress → Review → Done  
+Cards: User stories, tasks, bugs
+Features: Priority tags, assignee avatars, due dates
+```
+
+### 🛠️ Development Workflow  
+```
+Boards: Sprints or Teams
+Columns: To Do → Doing → Code Review → Testing → Done
+Cards: Development tasks, bug fixes, features
+Features: Story points, branch links, pull request status
+```
+
+### 📈 Sales Pipeline
+```
+Boards: Sales regions or product lines
+Columns: Lead → Qualified → Proposal → Negotiation → Closed
+Cards: Sales opportunities, deals, prospects  
+Features: Deal value, probability, contact info
+```
+
+### 🎓 Course Management
+```
+Boards: Courses or semesters
+Columns: Not Started → In Progress → Under Review → Completed
+Cards: Assignments, projects, assessments
+Features: Due dates, grades, student progress
+```
+
+## 📡 Event Handling
+
+### onCardDrop Event
+Triggered when a card is moved between columns or reordered:
+
+```javascript
+// changeJSON contains:
+{
+  "cardId": "card_123",
+  "sourceColumnId": "col_1", 
+  "targetColumnId": "col_2",
+  "newIndex": 3,
+  "oldIndex": 1,
+  "boardId": "board_1" // (multi-board only)
+}
+```
+
+#### Example Microflow Handler
+```
+1. Parse changeJSON parameter
+2. Retrieve card entity by cardId
+3. Update card's ParentColumnID to targetColumnId  
+4. Update card's Order to newIndex
+5. Commit changes
+6. Refresh data sources
+```
+
+### sortOrderJSON  
+Contains column reordering information when columns are rearranged:
+
+```javascript
+{
+  "boardId": "board_1", // (multi-board only)
+  "columnOrder": ["col_1", "col_3", "col_2"]
+}
+```
+
+## 🏗️ Architecture & Components
+
+### Core Components
+
+```
+src/
+├── Kanban.tsx                     # Main widget entry point
+├── components/
+│   ├── SingleBoard.tsx            # Single board implementation  
+│   ├── MultiBoard.tsx             # Multi-board implementation
+│   ├── AdvancedKanbanBoard.tsx    # Core board with drag & drop
+│   ├── MultiBoardDragDrop.tsx     # Advanced multi-board DnD
+│   └── shared/
+│       ├── useCardCache.ts        # Performance caching hook
+│       └── cardUtils.ts           # Card creation utilities
+├── utils/
+│   └── resizeObserverSuppress.ts  # Error suppression utilities
+└── ui/
+    └── Kanban.css                 # Comprehensive styling
+```
+
+### Key Technologies
+
+- **🔧 @dnd-kit/core**: Modern drag and drop for React
+- **📱 @dnd-kit/sortable**: Sortable presets and utilities  
+- **🛠️ @dnd-kit/utilities**: Helper utilities for transforms
+- **⚛️ React Hooks**: State management and performance optimization
+- **🎨 CSS Grid/Flexbox**: Responsive layout system
+- **♿ WCAG Compliance**: Full accessibility support
+
+## 🔧 Development
+
+### Building
+```bash
+npm install
+npm run build
+```
+
+### Testing  
+```bash
+npm test
+npm run lint
+```
+
+### Release
+```bash
+npm run release
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)  
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📖 **Documentation**: Complete widget documentation available
+- 🐛 **Issues**: Report bugs via GitHub issues
+- 💬 **Community**: Join the Mendix Community for discussions
+- 📧 **Contact**: Reach out for enterprise support
+
+---
+
+**Made with ❤️ for the Mendix Community**
 
 ### On Card Drop
 Triggered when a card is moved between columns. Use this to:
