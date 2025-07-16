@@ -4,7 +4,7 @@
  * @author Mendix Widgets Framework Team
  */
 import { ComponentType, CSSProperties, ReactNode } from "react";
-import { ActionValue, EditableValue, ListValue, ListAttributeValue, ListWidgetValue } from "mendix";
+import { ActionValue, EditableValue, ListValue, ListAttributeValue, ListExpressionValue, ListWidgetValue } from "mendix";
 import { Big } from "big.js";
 
 export type TypeOfBoardEnum = "single" | "multi";
@@ -18,6 +18,8 @@ export interface KanbanContainerProps {
     changeJSON: EditableValue<string>;
     sortOrderJSON: EditableValue<string>;
     boardHeight: number;
+    showBoardStats: boolean;
+    showColumnStats: boolean;
     s_data_columns?: ListValue;
     s_column_id?: ListAttributeValue<string>;
     s_column_sort?: ListAttributeValue<Big>;
@@ -30,6 +32,7 @@ export interface KanbanContainerProps {
     m_data_boards?: ListValue;
     m_board_id?: ListAttributeValue<string>;
     m_board_sort?: ListAttributeValue<Big>;
+    m_board_color?: ListExpressionValue<string>;
     m_data_columns?: ListValue;
     m_column_id?: ListAttributeValue<string>;
     m_column_parent?: ListAttributeValue<string>;
@@ -58,6 +61,8 @@ export interface KanbanPreviewProps {
     changeJSON: string;
     sortOrderJSON: string;
     boardHeight: number | null;
+    showBoardStats: boolean;
+    showColumnStats: boolean;
     s_data_columns: {} | { caption: string } | { type: string } | null;
     s_column_id: string;
     s_column_sort: string;
@@ -70,6 +75,7 @@ export interface KanbanPreviewProps {
     m_data_boards: {} | { caption: string } | { type: string } | null;
     m_board_id: string;
     m_board_sort: string;
+    m_board_color: string;
     m_data_columns: {} | { caption: string } | { type: string } | null;
     m_column_id: string;
     m_column_parent: string;

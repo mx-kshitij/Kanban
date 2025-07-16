@@ -26,6 +26,7 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
         m_board_id,
         m_board_sort,
         m_board_content,
+        m_board_color,
         
         // Column data source and attributes
         m_data_columns,
@@ -41,7 +42,9 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
         onCardDrop,
         changeJSON,
         sortOrderJSON,
-        boardHeight
+        boardHeight,
+        showBoardStats,
+        showColumnStats
     } = props;
 
     // State for optimistic updates
@@ -65,6 +68,7 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
             const boardId = m_board_id?.get(boardItem)?.value || "";
             const boardContent = m_board_content?.get(boardItem);
             const boardSortValue = m_board_sort?.get(boardItem)?.value?.toNumber() || 0;
+            const boardColor = m_board_color?.get(boardItem)?.value || "";
             
             // Get columns for this board
             const columns = m_data_columns?.items?.filter((columnItem: ObjectItem) => {
@@ -121,13 +125,14 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
                 id: boardId,
                 title: boardContent || boardId, // Use board content widget or fallback to ID
                 columns,
-                sortValue: boardSortValue
+                sortValue: boardSortValue,
+                color: boardColor
             };
         })?.sort((a, b) => {
             // Sort boards by sort attribute
             return a.sortValue - b.sortValue;
         }) || [];
-    }, [m_data_boards, m_board_id, m_board_sort, m_board_content, m_data_columns, m_column_id, m_column_parent, m_column_sort, m_column_content, m_data_cards, m_card_id, m_card_parent, m_card_sort, m_content, cachedCardContent, cardsUsingCache]);
+    }, [m_data_boards, m_board_id, m_board_sort, m_board_content, m_board_color, m_data_columns, m_column_id, m_column_parent, m_column_sort, m_column_content, m_data_cards, m_card_id, m_card_parent, m_card_sort, m_content, cachedCardContent, cardsUsingCache]);
 
     const baseBoards = getBoards();
 
@@ -328,6 +333,8 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
             allowCardReordering={true}
             defaultBoardHeight={defaultBoardHeight}
             collapsible={true}
+            showBoardStats={showBoardStats}
+            showColumnStats={showColumnStats}
         />
     );
 }

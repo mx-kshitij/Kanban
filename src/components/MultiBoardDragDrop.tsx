@@ -28,16 +28,57 @@ import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { KanbanCard, KanbanColumn } from "./AdvancedKanbanBoard";
 
+/**
+ * Determines the best text color (white or black) based on background color brightness
+ */
+function getContrastTextColor(backgroundColor: string): string {
+    // Convert color to RGB values
+    const color = backgroundColor.trim();
+    
+    // Handle hex colors
+    if (color.startsWith('#')) {
+        const hex = color.substring(1);
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        // Calculate luminance using the relative luminance formula
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return white text for dark backgrounds, black text for light backgrounds
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+    
+    // Handle rgb/rgba colors
+    if (color.startsWith('rgb')) {
+        const match = color.match(/\d+/g);
+        if (match && match.length >= 3) {
+            const r = parseInt(match[0]);
+            const g = parseInt(match[1]);
+            const b = parseInt(match[2]);
+            
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+    }
+    
+    // Default to white text for unknown color formats
+    return '#ffffff';
+}
+
 export interface MultiBoardDragDropProps {
     boards: Array<{
         id: string;
         title: ReactNode;
         columns: KanbanColumn[];
+        color?: string;
     }>;
     onCardDrop: (cardId: string, sourceColumnId: string, targetColumnId: string, newIndex?: number) => void;
     allowCardReordering?: boolean;
     defaultBoardHeight?: number;
     collapsible?: boolean;
+    showBoardStats?: boolean;
+    showColumnStats?: boolean;
 }
 
 interface DraggableCardProps {
@@ -55,6 +96,7 @@ interface DroppableColumnProps {
         cardId?: string;
         position?: 'before' | 'after';
     } | null;
+    showColumnStats?: boolean;
 }
 
 interface BoardContainerProps {
@@ -62,6 +104,7 @@ interface BoardContainerProps {
         id: string;
         title: ReactNode;
         columns: KanbanColumn[];
+        color?: string;
     };
     allowCardReordering: boolean;
     dragOverInfo?: {
@@ -71,6 +114,8 @@ interface BoardContainerProps {
     } | null;
     defaultHeight?: number;
     collapsible?: boolean;
+    showBoardStats?: boolean;
+    showColumnStats?: boolean;
 }
 
 function DraggableCard({ card, isDragging }: DraggableCardProps): ReactElement {
@@ -117,7 +162,14 @@ function DraggableCard({ card, isDragging }: DraggableCardProps): ReactElement {
     );
 }
 
-function DroppableColumn({ column, boardId, allowCardReordering, children, dragOverInfo }: DroppableColumnProps): ReactElement {
+function DroppableColumn({ 
+    column, 
+    boardId, 
+    allowCardReordering, 
+    children, 
+    dragOverInfo,
+    showColumnStats = true 
+}: DroppableColumnProps): ReactElement {
     const { setNodeRef, isOver } = useDroppable({
         id: column.id,
         data: {
@@ -136,7 +188,9 @@ function DroppableColumn({ column, boardId, allowCardReordering, children, dragO
         <div className="kanban-column" data-column-id={column.id}>
             <div className="kanban-column-header">
                 <div className="kanban-column-title">{column.title}</div>
-                <span className="kanban-card-count">{column.cards.length}</span>
+                {showColumnStats && (
+                    <span className="kanban-card-count">{column.cards.length}</span>
+                )}
             </div>
             <div 
                 ref={setNodeRef}
@@ -173,17 +227,35 @@ function DroppableColumn({ column, boardId, allowCardReordering, children, dragO
     );
 }
 
-function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeight, collapsible = true }: BoardContainerProps): ReactElement {
+function BoardContainer({ 
+    board, 
+    allowCardReordering, 
+    dragOverInfo, 
+    defaultHeight, 
+    collapsible = true,
+    showBoardStats = true,
+    showColumnStats = true 
+}: BoardContainerProps): ReactElement {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const toggleCollapse = () => {
         setIsCollapsed(!isCollapsed);
     };
 
-    const cardCount = board.columns.reduce((total, column) => total + column.cards.length, 0);
+    // Calculate card count for board stats
+    const cardCount = showBoardStats ? board.columns.reduce((total, column) => total + column.cards.length, 0) : 0;
+
+    // Apply board background color using CSS custom property and determine text color
+    const boardStyle: React.CSSProperties = board.color ? { 
+        '--board-bg-color': board.color,
+        '--board-text-color': getContrastTextColor(board.color)
+    } as React.CSSProperties : {};
 
     return (
-        <div className={`kanban-board-container ${isCollapsed ? 'collapsed' : ''}`}>
+        <div 
+            className={`kanban-board-container ${isCollapsed ? 'collapsed' : ''}`}
+            style={boardStyle}
+        >
             <div className="kanban-board-header">
                 <div className="kanban-board-title-wrapper">
                     <div className="kanban-board-title-row">
@@ -200,10 +272,12 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
                         )}
                         <div className="kanban-board-title">{board.title}</div>
                     </div>
-                    <div className="kanban-board-stats">
-                        <span className="kanban-board-column-count">{board.columns.length} columns</span>
-                        <span className="kanban-board-card-count">{cardCount} cards</span>
-                    </div>
+                    {showBoardStats && (
+                        <div className="kanban-board-stats">
+                            <span className="kanban-board-column-count">{board.columns.length} columns</span>
+                            <span className="kanban-board-card-count">{cardCount} cards</span>
+                        </div>
+                    )}
                 </div>
             </div>
             
@@ -223,6 +297,7 @@ function BoardContainer({ board, allowCardReordering, dragOverInfo, defaultHeigh
                             boardId={board.id}
                             allowCardReordering={allowCardReordering}
                             dragOverInfo={dragOverInfo}
+                            showColumnStats={showColumnStats}
                         >
                             {column.cards.map((card) => (
                                 <DraggableCard
@@ -243,7 +318,9 @@ export function MultiBoardDragDrop({
     onCardDrop, 
     allowCardReordering = true, 
     defaultBoardHeight = 400,
-    collapsible = true 
+    collapsible = true,
+    showBoardStats = true,
+    showColumnStats = true
 }: MultiBoardDragDropProps): ReactElement {
     const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
     const [dragOverInfo, setDragOverInfo] = useState<{
@@ -491,6 +568,8 @@ export function MultiBoardDragDrop({
                             dragOverInfo={dragOverInfo}
                             defaultHeight={defaultBoardHeight}
                             collapsible={collapsible}
+                            showBoardStats={showBoardStats}
+                            showColumnStats={showColumnStats}
                         />
                     ))}
                 </div>

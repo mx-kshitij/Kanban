@@ -33,6 +33,14 @@
                 <caption>Board height</caption>
                 <description></description>
             </property>
+            <property key="showBoardStats" type="boolean" defaultValue="true">
+                <caption>Show board statistics</caption>
+                <description>Display column and card counts in board headers</description>
+            </property>
+            <property key="showColumnStats" type="boolean" defaultValue="true">
+                <caption>Show column statistics</caption>
+                <description>Display card counts in column headers</description>
+            </property>
 
         </propertyGroup>
 
@@ -115,6 +123,10 @@
                     <attributeTypes>
                         <attributeType name="Integer"/>
                     </attributeTypes>
+                </property>
+                <property key="m_board_color" type="textTemplate" required="false" dataSource="m_data_boards">
+                    <caption>Board color</caption>
+                    <description></description>
                 </property>
             </propertyGroup>
             <propertyGroup caption="Columns">

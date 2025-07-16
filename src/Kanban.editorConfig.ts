@@ -390,7 +390,54 @@ export function check(values: KanbanPreviewProps): Problem[] {
         }
     }
     
+    // Validate color values for multi-board
+    if (values.typeOfBoard === "multi" && values.m_board_color) {
+        // Basic color validation - check if it looks like a valid CSS color
+        const colorValue = values.m_board_color.trim();
+        if (colorValue && !isValidCSSColor(colorValue)) {
+            errors.push({
+                property: "m_board_color",
+                severity: "warning",
+                message: "Board color should be a valid CSS color value (e.g., #FF0000, rgb(255,0,0), red, etc.)."
+            });
+        }
+    }
+    
     return errors;
+}
+
+// Simple CSS color validation for editor
+function isValidCSSColor(color: string): boolean {
+    if (!color || typeof color !== 'string') {
+        return false;
+    }
+    
+    const trimmed = color.trim();
+    if (!trimmed) {
+        return true; // Empty is valid (will use default)
+    }
+    
+    // Check for common color patterns
+    const patterns = [
+        /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, // Hex colors
+        /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/, // RGB
+        /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\)$/, // RGBA
+        /^hsl\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\)$/, // HSL
+        /^hsla\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*,\s*[0-9.]+\s*\)$/, // HSLA
+    ];
+    
+    // Check against patterns
+    if (patterns.some(pattern => pattern.test(trimmed))) {
+        return true;
+    }
+    
+    // Check for named colors (basic set)
+    const namedColors = [
+        'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'white', 'gray', 'grey',
+        'cyan', 'magenta', 'lime', 'maroon', 'navy', 'olive', 'silver', 'teal', 'aqua', 'fuchsia'
+    ];
+    
+    return namedColors.includes(trimmed.toLowerCase());
 }
 
 // export function getPreview(values: KanbanPreviewProps, isDarkMode: boolean, version: number[]): PreviewProps {
