@@ -325,19 +325,16 @@ export function AdvancedKanbanBoard({
                     const targetColumn = columns.find(col => col.id === targetColumnId);
                     if (targetColumn) {
                         const targetIndex = targetColumn.cards.findIndex(card => card.id === over.id);
-                        if (targetColumnId === activeColumnId) {
-                            // Same column reordering - use exact index
-                            newIndex = targetIndex;
-                        } else {
-                            // Cross-column drop - insert after the target card for better UX
-                            newIndex = targetIndex + 1;
-                        }
+                        // Use exact position of target card for both same-column and cross-column drops
+                        newIndex = targetIndex;
                     }
                 } else {
                     targetColumnId = activeColumnId;
                 }
             } else if (overData?.type === 'column') {
-                // Dropped over a column
+                // Dropped over a column - place at first position
+                targetColumnId = overData.column.id;
+                newIndex = 0;
                 targetColumnId = overData.column.id;
             } else {
                 // Fallback - try to find column from the over id

@@ -65,21 +65,10 @@
 
 /* Content area uses a lighter version of the board color */
 .kanban-board-container[style*="--board-bg-color"] .kanban-board {
-    background: rgba(255, 255, 255, 0.8);
+    background: 
+        linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+        var(--board-bg-color, transparent);
     position: relative;
-}
-
-.kanban-board-container[style*="--board-bg-color"] .kanban-board::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--board-bg-color, transparent);
-    opacity: 0.15;
-    pointer-events: none;
-    border-radius: 0 0 8px 8px;
 }
 
 /* Ensure columns maintain their background on colored boards */

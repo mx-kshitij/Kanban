@@ -440,8 +440,9 @@ export function MultiBoardDragDrop({
         let newIndex: number | undefined;
         
         if (over.data.current?.type === "column") {
-            // Dropped on empty space in a column - add to end
+            // Dropped on empty space in a column - add to first position
             targetColumnId = over.id as string;
+            newIndex = 0; // Place at first position when dropping on empty column
         } else if (over.data.current?.type === "card") {
             // Dropped on another card - find the column and calculate proper position
             const targetCard = over.data.current.card;
@@ -452,14 +453,8 @@ export function MultiBoardDragDrop({
                     const cardIndex = column.cards.findIndex(card => card.id === targetCard.id);
                     if (cardIndex !== -1) {
                         targetColumnId = column.id;
-                        
-                        if (sourceColumnId === targetColumnId) {
-                            // Same column reordering - use exact index from sortable
-                            newIndex = cardIndex;
-                        } else {
-                            // Cross-column drop - insert after the target card for better UX
-                            newIndex = cardIndex + 1;
-                        }
+                        // Use exact position of target card for both same-column and cross-column drops
+                        newIndex = cardIndex;
                         break;
                     }
                 }

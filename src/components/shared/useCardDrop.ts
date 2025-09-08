@@ -71,8 +71,8 @@ export function useCardDrop(options: UseCardDropOptions, getColumnsOrBoards: () 
                         cardOrder = cardOrder.filter((id: string) => id !== cardId);
                     }
                     
-                    // Insert the card at the new position
-                    const insertIndex = newIndex !== undefined ? Math.min(newIndex, cardOrder.length) : cardOrder.length;
+                    // Insert the card at the new position - default to first position (0) instead of last
+                    const insertIndex = newIndex !== undefined ? Math.min(newIndex, cardOrder.length) : 0;
                     cardOrder.splice(insertIndex, 0, cardId);
                     
                     // Create the sort order data with cardId and order
