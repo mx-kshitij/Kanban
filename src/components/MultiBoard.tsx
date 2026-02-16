@@ -317,7 +317,10 @@ export function MultiBoard(props: MultiBoardProps): ReactElement {
         };
 
         // Add card to target column at specified position
-        const insertIndex = newIndex !== undefined ? Math.min(newIndex, targetColumn.cards.length) : targetColumn.cards.length;
+        let insertIndex = newIndex !== undefined ? Math.min(newIndex, targetColumn.cards.length) : targetColumn.cards.length;
+        if (sourceColumnId === targetColumnId && newIndex !== undefined && cardIndex < newIndex) {
+            insertIndex = Math.max(0, insertIndex - 1);
+        }
         targetColumn.cards.splice(insertIndex, 0, movedCard);
 
         return newBoards;

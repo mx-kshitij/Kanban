@@ -9,6 +9,7 @@
 import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
+    Active,
     DndContext,
     DragEndEvent,
     DragOverlay,
@@ -17,7 +18,8 @@ import {
     useSensor,
     useSensors,
     closestCenter,
-    DragOverEvent
+    DragOverEvent,
+    Over
 } from "@dnd-kit/core";
 import {
     SortableContext,
@@ -176,7 +178,8 @@ function DroppableColumn({
             type: "column",
             column,
             boardId
-        }
+        },
+        disabled: column.cards.length > 0
     });
 
     const cardIds = column.cards.map(card => card.id);
@@ -200,12 +203,18 @@ function DroppableColumn({
                 {allowCardReordering ? (
                     <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
                         {column.cards.map((card) => {
-                            const showDropIndicator = isDropTarget && dropCardId === card.id && dropPosition === 'after';
+                            const showDropIndicatorBefore = isDropTarget && dropCardId === card.id && dropPosition === 'before';
+                            const showDropIndicatorAfter = isDropTarget && dropCardId === card.id && dropPosition === 'after';
                             return (
                                 <div key={card.key || card.id}>
+                                    {showDropIndicatorBefore && (
+                                        <div className="drop-indicator drop-indicator-before">
+                                            <div className="drop-line"></div>
+                                        </div>
+                                    )}
                                     <DraggableCard card={card} />
-                                    {showDropIndicator && (
-                                        <div className="drop-indicator">
+                                    {showDropIndicatorAfter && (
+                                        <div className="drop-indicator drop-indicator-after">
                                             <div className="drop-line"></div>
                                         </div>
                                     )}
@@ -370,6 +379,19 @@ export function MultiBoardDragDrop({
         )
     );
 
+    const getCardDropPosition = (active: Active, over: Over): 'before' | 'after' => {
+        const translatedRect = active.rect.current.translated;
+
+        if (!translatedRect) {
+            return 'after';
+        }
+
+        const activeCenterY = translatedRect.top + translatedRect.height / 2;
+        const overCenterY = over.rect.top + over.rect.height / 2;
+
+        return activeCenterY < overCenterY ? 'before' : 'after';
+    };
+
     function handleDragStart(event: DragStartEvent) {
         const { active } = event;
         
@@ -440,25 +462,42 @@ export function MultiBoardDragDrop({
         let newIndex: number | undefined;
         
         if (over.data.current?.type === "column") {
-            // Dropped on empty space in a column - add to first position
+            // Dropped on column container (often when near edges) - place at end
             targetColumnId = over.id as string;
-            newIndex = 0; // Place at first position when dropping on empty column
+            const targetColumn = boards
+                .flatMap(board => board.columns)
+                .find(column => column.id === targetColumnId);
+
+            // Column-container drops are only allowed for empty columns
+            if (targetColumn && targetColumn.cards.length > 0) {
+                setTimeout(() => {
+                    console.error = originalError;
+                }, 200);
+                return;
+            }
+
+            newIndex = targetColumn ? targetColumn.cards.length : undefined;
         } else if (over.data.current?.type === "card") {
             // Dropped on another card - find the column and calculate proper position
             const targetCard = over.data.current.card;
+
+            if (targetCard.id === draggedCardId) {
+                targetColumnId = sourceColumnId;
+            } else {
             
-            // Find which column contains the target card
-            for (const board of boards) {
-                for (const column of board.columns) {
-                    const cardIndex = column.cards.findIndex(card => card.id === targetCard.id);
-                    if (cardIndex !== -1) {
-                        targetColumnId = column.id;
-                        // Use exact position of target card for both same-column and cross-column drops
-                        newIndex = cardIndex;
-                        break;
+                // Find which column contains the target card
+                for (const board of boards) {
+                    for (const column of board.columns) {
+                        const cardIndex = column.cards.findIndex(card => card.id === targetCard.id);
+                        if (cardIndex !== -1) {
+                            targetColumnId = column.id;
+                            const dropPosition = getCardDropPosition(active, over);
+                            newIndex = cardIndex + (dropPosition === 'after' ? 1 : 0);
+                            break;
+                        }
                     }
+                    if (targetColumnId) break;
                 }
-                if (targetColumnId) break;
             }
         }
         
@@ -521,23 +560,30 @@ export function MultiBoardDragDrop({
         } else if (over.data.current?.type === "card") {
             // Hovering over a card
             const targetCard = over.data.current.card;
+            const dropPosition = getCardDropPosition(active, over);
             
             // Find which column contains the target card
+            let foundTarget = false;
             for (const board of boards) {
                 for (const column of board.columns) {
                     if (column.cards.some(card => card.id === targetCard.id)) {
-                        if (sourceColumnId !== column.id) {
+                        if (draggedCard.id !== targetCard.id) {
                             setDragOverInfo({
                                 columnId: column.id,
                                 cardId: targetCard.id,
-                                position: 'after'
+                                position: dropPosition
                             });
                         } else {
                             setDragOverInfo(null);
                         }
+                        foundTarget = true;
                         break;
                     }
                 }
+                if (foundTarget) break;
+            }
+            if (!foundTarget) {
+                setDragOverInfo(null);
             }
         } else {
             setDragOverInfo(null);
