@@ -10,6 +10,7 @@ import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
     Active,
+    CollisionDetection,
     DndContext,
     DragEndEvent,
     DragOverlay,
@@ -18,6 +19,7 @@ import {
     useSensor,
     useSensors,
     closestCenter,
+    pointerWithin,
     DragOverEvent,
     Over
 } from "@dnd-kit/core";
@@ -264,6 +266,7 @@ function BoardContainer({
         <div 
             className={`kanban-board-container ${isCollapsed ? 'collapsed' : ''}`}
             style={boardStyle}
+            data-kanban-board-id={board.id}
         >
             <div className="kanban-board-header">
                 <div className="kanban-board-title-wrapper">
@@ -372,12 +375,62 @@ export function MultiBoardDragDrop({
         })
     );
 
-    // Collect all card IDs across all boards for the sortable context
-    const allCardIds = boards.flatMap(board => 
-        board.columns.flatMap(column => 
-            column.cards.map(card => card.id)
-        )
-    );
+    // Build helpers to know which board/column an id belongs to.
+    const cardIndex = new Map<string, { boardId: string; columnId: string }>();
+    const columnIndex = new Map<string, { boardId: string }>();
+    boards.forEach(board => {
+        board.columns.forEach(column => {
+            columnIndex.set(column.id, { boardId: board.id });
+            column.cards.forEach(card => {
+                cardIndex.set(card.id, { boardId: board.id, columnId: column.id });
+            });
+        });
+    });
+
+    // Prefer the droppable directly under the pointer. When several rects
+    // contain the pointer (e.g. column rect bleed across boards), pick the
+    // one whose center is closest to the pointer — that's the innermost /
+    // most specific target. Only fall back to closestCenter when the pointer
+    // is over a true gap with nothing underneath.
+    const collisionDetection: CollisionDetection = (args) => {
+        const pointer = args.pointerCoordinates;
+
+        // Filter helper: keep only candidates whose owning board container's
+        // bounding rect actually contains the pointer. This neutralises rect
+        // "bleed" caused by overflow: auto in another board's column making
+        // off-screen card rects geometrically overlap a different board.
+        const isInsideOwningBoard = (id: unknown): boolean => {
+            if (!pointer) return true;
+            const key = String(id);
+            const meta = cardIndex.get(key) ?? columnIndex.get(key);
+            if (!meta) return true;
+            const boardId = (meta as { boardId: string }).boardId;
+            // Escape characters that would break the attribute selector.
+            const escaped = boardId.replace(/(["\\])/g, "\\$1");
+            const el = document.querySelector(`[data-kanban-board-id="${escaped}"]`);
+            if (!el) return true;
+            const r = el.getBoundingClientRect();
+            return pointer.x >= r.left && pointer.x <= r.right && pointer.y >= r.top && pointer.y <= r.bottom;
+        };
+
+        const pointerCollisions = pointerWithin(args).filter(c => isInsideOwningBoard(c.id));
+        let used = pointerCollisions;
+
+        if (pointerCollisions.length > 1) {
+            const { x, y } = pointer ?? { x: 0, y: 0 };
+            const ranked = [...pointerCollisions].sort((a, b) => {
+                const ra: any = a.data?.droppableContainer?.rect?.current;
+                const rb: any = b.data?.droppableContainer?.rect?.current;
+                const da = ra ? Math.hypot((ra.left + ra.width / 2) - x, (ra.top + ra.height / 2) - y) : Number.POSITIVE_INFINITY;
+                const db = rb ? Math.hypot((rb.left + rb.width / 2) - x, (rb.top + rb.height / 2) - y) : Number.POSITIVE_INFINITY;
+                return da - db;
+            });
+            used = ranked;
+        } else if (pointerCollisions.length === 0) {
+            used = closestCenter(args).filter(c => isInsideOwningBoard(c.id));
+        }
+        return used;
+    };
 
     const getCardDropPosition = (active: Active, over: Over): 'before' | 'after' => {
         const translatedRect = active.rect.current.translated;
@@ -528,7 +581,7 @@ export function MultiBoardDragDrop({
 
     function handleDragOver(event: DragOverEvent) {
         const { active, over } = event;
-        
+
         if (!over || !active.data.current?.card) {
             setDragOverInfo(null);
             return;
@@ -594,12 +647,16 @@ export function MultiBoardDragDrop({
         <div className="kanban-error-boundary">
             <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={collisionDetection}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onDragOver={handleDragOver}
             >
-            <SortableContext items={allCardIds} strategy={verticalListSortingStrategy}>
+                {/* NOTE: Do not wrap all boards in a single SortableContext.
+                    Each column has its own SortableContext for intra-column
+                    reordering. A global vertical sortable across all boards
+                    causes cards in other boards' columns to shift/animate
+                    during a drag. */}
                 <div className="kanban-multi-board">
                     {boards.map((board) => (
                         <BoardContainer 
@@ -614,7 +671,6 @@ export function MultiBoardDragDrop({
                         />
                     ))}
                 </div>
-            </SortableContext>
             
             <DragOverlay>
                 {activeCard ? (

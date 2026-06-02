@@ -10,6 +10,7 @@ import { ReactElement, createElement, useState, useEffect } from "react";
 import { ReactNode } from "react";
 import {
     Active,
+    CollisionDetection,
     DndContext,
     DragEndEvent,
     DragOverlay,
@@ -18,6 +19,7 @@ import {
     useSensor,
     useSensors,
     closestCenter,
+    pointerWithin,
     DragOverEvent,
     Over
 } from "@dnd-kit/core";
@@ -220,6 +222,16 @@ export function AdvancedKanbanBoard({
         })
     );
 
+    // Prefer the droppable directly under the pointer to keep drop targets
+    // visually accurate; fall back to closestCenter only when over a gap.
+    const collisionDetection: CollisionDetection = (args) => {
+        const pointerCollisions = pointerWithin(args);
+        if (pointerCollisions.length > 0) {
+            return pointerCollisions;
+        }
+        return closestCenter(args);
+    };
+
     const findCardAndColumn = (cardId: string) => {
         for (const column of columns) {
             const card = column.cards.find(c => c.id === cardId);
@@ -407,7 +419,7 @@ export function AdvancedKanbanBoard({
     return (
         <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}

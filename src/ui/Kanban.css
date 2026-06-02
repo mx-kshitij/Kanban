@@ -269,6 +269,11 @@
     max-height: 80vh;
     display: flex;
     flex-direction: column;
+    /* Ensure the column never grows past its parent board's height so the
+       droppable area stays inside the board (prevents drops from
+       triggering on a column from another board stacked above/below). */
+    min-height: 0;
+    overflow: hidden;
 }
 
 .kanban-column-header {
@@ -304,7 +309,11 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    min-height: 100px;
+    /* min-height was 100px which makes the layout box bleed past the parent
+       column when the board height is small, causing the droppable rect to
+       overlap the next board's column. Keep 0 and let the empty placeholder
+       provide the visible drop area. */
+    min-height: 0;
     transition: background-color 0.2s ease;
 }
 
@@ -508,7 +517,9 @@
 }
 
 .kanban-column-content {
-    min-height: 100px;
+    /* Keep min-height: 0 here too so the inner content node never extends
+       past its parent column visually or geometrically. */
+    min-height: 0;
     transition: background-color 0.2s ease;
 }
 
